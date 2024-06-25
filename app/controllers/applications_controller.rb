@@ -48,6 +48,6 @@ class ApplicationsController < ApplicationController
 
     # get the application specified in the query params
     def get_application
-        @application = Application.find_by_token!(params[:token])
+        @application = Application.find(params[:token])
     end
 end

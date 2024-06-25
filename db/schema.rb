@@ -10,15 +10,31 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2024_06_24_134120) do
+ActiveRecord::Schema.define(version: 2024_06_25_131801) do
 
-  create_table "applications", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "token", null: false
+  create_table "applications", primary_key: "token", id: :string, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb3", force: :cascade do |t|
     t.string "name", null: false
     t.integer "chats_count", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["token"], name: "index_applications_on_token"
   end
 
+  create_table "chats", primary_key: ["application_token", "number"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb3", force: :cascade do |t|
+    t.integer "number", null: false
+    t.integer "messages_count", default: 0
+    t.string "application_token", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "messages", primary_key: ["application_token", "chat_number", "number"], options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb3", force: :cascade do |t|
+    t.integer "number", null: false
+    t.string "content", null: false
+    t.string "application_token", null: false
+    t.integer "chat_number", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  add_foreign_key "chats", "applications", column: "application_token", primary_key: "token"
 end

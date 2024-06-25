@@ -47,6 +47,8 @@ GEM
       msgpack (~> 1.2)
     builder (3.3.0)
     byebug (11.1.3)
+    composite_primary_keys (11.0.0)
+      activerecord (~> 5.2.0)
     concurrent-ruby (1.3.3)
     crass (1.0.6)
     database_cleaner (2.0.2)
@@ -206,6 +208,7 @@ PLATFORMS
 DEPENDENCIES
   bootsnap (>= 1.1.0)
   byebug
+  composite_primary_keys (~> 11)
   database_cleaner
   factory_bot_rails (~> 4.0)
   faker

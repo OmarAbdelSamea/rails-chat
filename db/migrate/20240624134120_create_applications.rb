@@ -1,7 +1,7 @@
 class CreateApplications < ActiveRecord::Migration[5.2]
   def change
-    create_table :applications do |t|
-      t.string :token, unique: true, index: true, null: false
+    create_table :applications, primary_key: [:token] do |t|
+      t.string :token, unique: true, index: false, null: false
       t.string :name, null: false
       t.integer :chats_count, default: 0
 
