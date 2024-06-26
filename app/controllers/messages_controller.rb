@@ -1,5 +1,5 @@
 class MessagesController < ApplicationController
-    before_action :get_chat, only: [:index, :create, :destroy]
+    before_action :get_chat, only: [:index, :create, :destroy, :search]
     before_action :get_chat_message, only: [:show, :update, :destroy]
     before_action :get_message_params, only: [:create, :update, :search]
 
@@ -32,10 +32,9 @@ class MessagesController < ApplicationController
     
     # PUT /applications/:application_token/chats/:chat_number/messages/:number
     def update
-        # lock the row in MySQL until the record is updated
-        @message.with_lock do
-            @message.update(get_message_params)
-        end
+        UpdateMessageJob.perform_async(@message.application_token, @message.chat_number, @message.number, params[:content])
+        # formulate the message for the response
+        @message.content = params[:content]
         json_response_messages(@message, :accepted)
     end
 
@@ -54,7 +53,33 @@ class MessagesController < ApplicationController
         end
     end
 
-    # TODO: Implement search functionality
+    # POST /applications/:application_token/chats/:chat_number/messages/search 
+    def search
+        @search_result = Message.search(
+          query: {
+            bool: {
+              must: [
+                {
+                  match: {
+                    content: params[:content]
+                  }
+                },
+                {
+                  match: {
+                    application_token: @chat.application_token
+                  }
+                },
+                {
+                  match: {
+                    chat_number: @chat.number
+                  }
+                }
+              ]
+            }
+          }
+        )
+        json_response_messages_search(@search_result, :created)
+    end
 
     private
 

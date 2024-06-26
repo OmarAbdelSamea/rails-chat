@@ -15,7 +15,9 @@ gem 'composite_primary_keys', '~> 11'
 gem 'redis', '~> 4.2'
 gem 'redlock'
 gem 'sidekiq'
-
+gem 'sidekiq-cron'
+gem 'elasticsearch-model'
+gem 'elasticsearch-rails'
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'
 
