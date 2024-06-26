@@ -41,7 +41,7 @@ RSpec.describe 'Messages API', type: :request do
             it 'returns the message' do
                 expect(json).not_to be_empty
                 expect(json['token']).to eq(message_number)
-            end
+        end
 
             it 'returns status code 200' do
                 expect(response).to have_http_status(200)
