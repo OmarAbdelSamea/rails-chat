@@ -55,29 +55,7 @@ class MessagesController < ApplicationController
 
     # POST /applications/:application_token/chats/:chat_number/messages/search 
     def search
-        @search_result = Message.search(
-          query: {
-            bool: {
-              must: [
-                {
-                  match: {
-                    content: params[:content]
-                  }
-                },
-                {
-                  match: {
-                    application_token: @chat.application_token
-                  }
-                },
-                {
-                  match: {
-                    chat_number: @chat.number
-                  }
-                }
-              ]
-            }
-          }
-        )
+        @search_result = Message.search_content(application_token: @chat.application_token, chat_number: @chat.number, content: params[:content])
         json_response_messages_search(@search_result, :created)
     end
 

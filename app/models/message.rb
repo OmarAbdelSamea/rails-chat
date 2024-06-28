@@ -1,8 +1,7 @@
 require 'elasticsearch/model'
 
 class Message < ApplicationRecord
-    include Elasticsearch::Model
-    include Elasticsearch::Model::Callbacks
+    include MessageSearchable
 
     self.primary_key = :application_token, :chat_number, :number
     belongs_to :chat, foreign_key: [:application_token, :chat_number]
