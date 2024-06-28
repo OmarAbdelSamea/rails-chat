@@ -59,9 +59,10 @@ class ChatsController < ApplicationController
     # gets the next scoped chat number from redis
     def update_chat_count_and_number(destroy: false)
         # lock the chat number in redis before incrementing the chats count and increment the chat number
-        @lock_result = $red_lock.lock("application_token:#{@application.token}/chats_count#chat_number", 2000)
+        @lock_result = $red_lock.lock("application_token:#{@application.token}", 2000)
         # if the lock is successful
         if @lock_result != false
+            @redis_value = $redis.get("application_token:#{@application.token}/chats_count#chat_number")
             @chat_count_number_arr = ($redis.get("application_token:#{@application.token}/chats_count#chat_number") || "0#0").split('#')
             @chats_count = @chat_count_number_arr[0].to_i
             @chat_number = @chat_count_number_arr[1].to_i
@@ -76,7 +77,7 @@ class ChatsController < ApplicationController
             # update the chat count in redis
             $redis.set("application_token:#{@application.token}/chats_count#chat_number", "#{@chats_count}##{@chat_number}")
             # unlock the chat number
-            $red_lock.unlock(@lock_result)
+            @unlock = $red_lock.unlock(@lock_result)
             return @chat_number, @lock_result
         else
             return 0, false

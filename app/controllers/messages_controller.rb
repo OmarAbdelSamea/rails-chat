@@ -106,7 +106,7 @@ class MessagesController < ApplicationController
     # update the messages count and the message number
     def update_message_count_and_number(destroy: false)
         # lock the message number in redis before incrementing the count
-        @lock_result = $red_lock.lock("application_token:#{@chat.application_token}/chat_number:#{@chat.number}/messages_count#message_number", 2000)
+        @lock_result = $red_lock.lock("application_token:#{@chat.application_token}/chat_number:#{@chat.number}", 2000)
         # if the lock is successful
         if @lock_result != false
             @message_count_number_arr = ($redis.get("application_token:#{@chat.application_token}/chat_number:#{@chat.number}/messages_count#message_number") || "0#0").split('#')
