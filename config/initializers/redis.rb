@@ -1,10 +1,8 @@
 require 'redis'
-# TODO: update the configuration to use the redis server
-redis_config = { url: "redis://localhost:6360/12" }
-
+redis_config = { url: "redis://#{ENV['REDIS_HOST']}:#{ENV['REDIS_PORT']}/1" }
 begin
     $redis = Redis.new(redis_config)
-    $red_lock = Redlock::Client.new(["redis://localhost:6360"])
+    $red_lock = Redlock::Client.new(["redis://#{ENV['REDIS_HOST']}:#{ENV['REDIS_PORT']}/1"])
 rescue Exception => e
     puts e
 end

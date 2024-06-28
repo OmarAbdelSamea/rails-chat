@@ -1,5 +1,4 @@
-# TODO: update the configuration to use the redis server
-sidekiq_config = { url: "redis://localhost:6360/12" }
+sidekiq_config = { url: "redis://#{ENV['REDIS_HOST']}:#{ENV['REDIS_PORT']}/12"}
 
 Sidekiq.configure_server do |config|
     config.redis = sidekiq_config

@@ -14,7 +14,7 @@ gem 'bootsnap', '>= 1.1.0', require: false
 gem 'composite_primary_keys', '~> 11'
 gem 'redis', '~> 4.2'
 gem 'redlock'
-gem 'sidekiq'
+gem 'sidekiq', '~> 6.5.9'
 gem 'sidekiq-cron'
 gem 'elasticsearch-model'
 gem 'elasticsearch-rails'
