@@ -5,25 +5,30 @@ module MessageSearchable
         include Elasticsearch::Model
         include Elasticsearch::Model::Callbacks
 
-        settings analysis: {
-          filter: {
-            ngram_filter: { type: "nGram", min_gram: 3, max_gram: 12 }
-          },
-          analyzer: {
-                index_ngram_analyzer: {
+        message_es_settings = {
+          index: {
+            analysis: {
+              filter: {
+                ngram_filter: {
+                  type: "edgeNGram",
+                  min_gram: 1,
+                  max_gram: 20
+                }
+              },
+              analyzer: {
+                ngram_analyzer: {
                     type: 'custom',
                     tokenizer: 'standard',
                     filter: ['lowercase', 'ngram_filter']
                 },
-                search_ngram_analyzer: {
-                    type: 'custom',
-                    tokenizer: 'standard',
-                    filter: ['lowercase']
-                }
+              }
             }
-        } do
+          }
+        }
+
+        settings message_es_settings do
           mapping do
-              indexes :content, type: 'text', analyzer: "index_ngram_analyzer", search_analyzer: "search_ngram_analyzer"
+              indexes :content, type: 'text', analyzer: "ngram_analyzer"
           end
         end 
 
@@ -34,7 +39,7 @@ module MessageSearchable
                   must: [
                     {
                       match: {
-                        content: "*#{content}*"
+                        content: content
                       }
                     },
                     {

@@ -141,12 +141,12 @@ Chat system that allows creating new applications, chats and messages the applic
 
 
 ### 4. Writing unit tests (specs) for Test Driven Development approach
-  - [Applications Spec](https://github.com/OmarAbdelSamea/rails-chat/blob/master/spec/requests/applications_spec.rb)
+  - [Applications Spec](https://github.com/OmarAbdelSamea/rails-chat/blob/main/spec/requests/applications_spec.rb)
 
 ### 5. Writing RESTful endpoints in controllers
-  - [Applications Controller](https://github.com/OmarAbdelSamea/rails-chat/blob/master/app/controllers/applications_controller.rb)
-  - [Chats Controller](https://github.com/OmarAbdelSamea/rails-chat/blob/master/app/controllers/chats_controller.rb)
-  - [Messages Controller](https://github.com/OmarAbdelSamea/rails-chat/blob/master/app/controllers/messages_controller.rb)
+  - [Applications Controller](https://github.com/OmarAbdelSamea/rails-chat/blob/main/app/controllers/applications_controller.rb)
+  - [Chats Controller](https://github.com/OmarAbdelSamea/rails-chat/blob/main/app/controllers/chats_controller.rb)
+  - [Messages Controller](https://github.com/OmarAbdelSamea/rails-chat/blob/main/app/controllers/messages_controller.rb)
 
 ### 6. Adding search endpoint for messages using `elastic search`
   - Adding `ElasticSearch` in Message model
@@ -316,8 +316,8 @@ class UpdateCountsJob
 end
 ```
 ### 10. Containerization of Rails app and orchestrations of services
-  - [Dockerfile](https://github.com/OmarAbdelSamea/rails-chat/blob/master/Dockerfile)
-  - [Docker-compose](https://github.com/OmarAbdelSamea/rails-chat/blob/master/docker-compose.yml)
+  - [Dockerfile](https://github.com/OmarAbdelSamea/rails-chat/blob/main/Dockerfile)
+  - [Docker-compose](https://github.com/OmarAbdelSamea/rails-chat/blob/main/docker-compose.yml)
 
 ### 11. Writing RESTful API compliant to openapi standard
-[openapi.yaml](https://github.com/OmarAbdelSamea/rails-chat/blob/master/openapi.yaml)
+[openapi.yaml](https://github.com/OmarAbdelSamea/rails-chat/blob/main/openapi.yaml)
