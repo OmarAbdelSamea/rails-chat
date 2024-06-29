@@ -36,7 +36,7 @@
 Chat system that allows creating new applications, chats and messages the applications supports running on multiple servers in parallel by processing requests concurrently using queues and locks.
 
 ## Demo
-### Todo add demo video
+https://github.com/OmarAbdelSamea/rails-chat/assets/57943026/276640eb-939b-45eb-a6ab-ee14a4dd34d7
 
 ## Architecture
 ![image](https://user-images.githubusercontent.com/57943026/176658099-9c6403ac-f963-4a3e-ad40-bca3551e2bca.png)
@@ -290,35 +290,6 @@ update_counts_persistent_storage:
   queue: default
 ```
 
-```ruby
-class UpdateCountsJob
-  include Sidekiq::Job
-
-  def perform(*args)
-    # get all applications in MySQL database
-    Application.find_each do |application|
-      # check if present in redis or not
-      if $redis.get("application_token:#{application.token}/chats_count#chat_number").present?
-        # if present then get the chat count from redis and update it in MySQL database
-        chats_count_arr = $redis.get("application_token:#{application.token}/chats_count#chat_number").split('#')
-        application.chats_count = chats_count_arr[0].to_i
-        application.save!
-      end
-    end
-
-    # get all chats in MySQL database
-    Chat.find_each do |chat|
-      # check if present in redis or not
-      if $redis.get("application_token:#{chat.application_token}/chat_number:#{chat.number}/messages_count#message_number").present?
-        # if present then get the message count from redis and update it in MySQL database
-        messages_count_arr = $redis.get("application_token:#{chat.application_token}/chat_number:#{chat.number}/messages_count#message_number").split('#')
-        chat.messages_count = messages_count_arr[0].to_i
-        chat.save!
-      end
-    end
-  end
-end
-```
 ### 10. Containerization of Rails app and orchestrations of services
   - [Dockerfile](https://github.com/OmarAbdelSamea/rails-chat/blob/main/Dockerfile)
   - [Docker-compose](https://github.com/OmarAbdelSamea/rails-chat/blob/main/docker-compose.yml)
