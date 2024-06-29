@@ -159,25 +159,30 @@ module MessageSearchable
         include Elasticsearch::Model
         include Elasticsearch::Model::Callbacks
 
-        settings analysis: {
-          filter: {
-            ngram_filter: { type: "nGram", min_gram: 3, max_gram: 12 }
-          },
-          analyzer: {
-                index_ngram_analyzer: {
+        message_es_settings = {
+          index: {
+            analysis: {
+              filter: {
+                ngram_filter: {
+                  type: "edgeNGram",
+                  min_gram: 1,
+                  max_gram: 20
+                }
+              },
+              analyzer: {
+                ngram_analyzer: {
                     type: 'custom',
                     tokenizer: 'standard',
                     filter: ['lowercase', 'ngram_filter']
                 },
-                search_ngram_analyzer: {
-                    type: 'custom',
-                    tokenizer: 'standard',
-                    filter: ['lowercase']
-                }
+              }
             }
-        } do
+          }
+        }
+
+        settings message_es_settings do
           mapping do
-              indexes :content, type: 'text', analyzer: "index_ngram_analyzer", search_analyzer: "search_ngram_analyzer"
+              indexes :content, type: 'text', analyzer: "ngram_analyzer"
           end
         end 
 
@@ -188,7 +193,7 @@ module MessageSearchable
                   must: [
                     {
                       match: {
-                        content: "*#{content}*"
+                        content: content
                       }
                     },
                     {
@@ -248,29 +253,28 @@ end
    - Saving `chats_count`, `next_chat_number`, `messages_count`, `next_message_number` in Redis instead of MySQL with each new record for higher performance. Persistent DB is updated using a cron job.
 
   ```ruby
-    # gets the next scoped chat number from redis
-    def update_chat_count_and_number(destroy: false)
-        # lock the chat number in redis before incrementing the chats count and increment the chat number
-        @lock_result = $red_lock.lock("application_token:#{@application.token}", 2000)
+    # update the messages count and the message number
+    def update_message_count_and_number(destroy: false)
+        # lock the message number in redis before incrementing the count
+        @lock_result = $red_lock.lock("application_token:#{params[:application_token]}/chat_number:#{params[:chat_number]}", 2000)
         # if the lock is successful
         if @lock_result != false
-            @redis_value = $redis.get("application_token:#{@application.token}/chats_count#chat_number")
-            @chat_count_number_arr = ($redis.get("application_token:#{@application.token}/chats_count#chat_number") || "0#0").split('#')
-            @chats_count = @chat_count_number_arr[0].to_i
-            @chat_number = @chat_count_number_arr[1].to_i
+            @message_count_number_arr = ($redis.get("application_token:#{params[:application_token]}/chat_number:#{params[:chat_number]}/messages_count#message_number") || "0#0").split('#')
+            @messages_count = @message_count_number_arr[0].to_i
+            @message_number = @message_count_number_arr[1].to_i
             if destroy
-                # get the chats count from redis and decrement it by 1
-                @chats_count -= 1
+                # get the messages count from redis and decrement it by 1
+                @messages_count -= 1
             else
-                # get the chat count from redis and increment it by 1 if not found will set it to 1
-                @chats_count += 1
-                @chat_number += 1
+                # get the message count, number from redis and increment it by 1 if not found will set it to 1
+                @messages_count += 1
+                @message_number += 1
             end
-            # update the chat count in redis
-            $redis.set("application_token:#{@application.token}/chats_count#chat_number", "#{@chats_count}##{@chat_number}")
-            # unlock the chat number
-            @unlock = $red_lock.unlock(@lock_result)
-            return @chat_number, @lock_result
+            # update the message count in redis
+            $redis.set("application_token:#{params[:application_token]}/chat_number:#{params[:chat_number]}/messages_count#message_number", "#{@messages_count}##{@message_number}")
+            # unlock the message number
+            $red_lock.unlock(@lock_result)
+            return @message_number, @lock_result
         else
             return 0, false
         end

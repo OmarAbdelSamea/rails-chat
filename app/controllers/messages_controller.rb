@@ -1,10 +1,10 @@
 class MessagesController < ApplicationController
-    before_action :get_chat, only: [:index, :create, :destroy, :search]
-    before_action :get_chat_message, only: [:show, :update, :destroy]
+    before_action :get_chat_message, only: [:show, :destroy]
     before_action :get_message_params, only: [:create, :update, :search]
 
     # GET /applications/:application_token/chats/:chat_number/messages
     def index
+        @chat = Chat.find([params[:application_token], params[:chat_number]])
         json_response_messages(@chat.messages.order(number: :asc))
     end
 
@@ -15,9 +15,9 @@ class MessagesController < ApplicationController
         # if the lock is successfully acquired
         if @lock_result != false
             # create a model with the new scoped message number for response 
-            @message = @chat.messages.new(number: @count, content: params[:content])
+            @message = Message.new(application_token: params[:application_token], chat_number: params[:chat_number], number: @count, content: params[:content])
             # invoke sidekiq worker to create a new message record in the db
-            CreateMessageJob.perform_async(@chat.application_token, @chat.number ,@count, params[:content])
+            CreateMessageJob.perform_async(params[:application_token], params[:chat_number] ,@count, params[:content])
             json_response_messages(@message, :created)
         else
             # if lock result is false then resource not available return error
@@ -32,9 +32,9 @@ class MessagesController < ApplicationController
     
     # PUT /applications/:application_token/chats/:chat_number/messages/:number
     def update
-        UpdateMessageJob.perform_async(@message.application_token, @message.chat_number, @message.number, params[:content])
+        UpdateMessageJob.perform_async(params[:application_token], params[:chat_number], params[:number], params[:content])
         # formulate the message for the response
-        @message.content = params[:content]
+        @message = Message.new(application_token: params[:application_token], chat_number: params[:chat_number], number: params[:number], content: params[:content])
         json_response_messages(@message, :accepted)
     end
 
@@ -55,7 +55,7 @@ class MessagesController < ApplicationController
 
     # POST /applications/:application_token/chats/:chat_number/messages/search 
     def search
-        @search_result = Message.search_content(application_token: @chat.application_token, chat_number: @chat.number, content: params[:content])
+        @search_result = Message.search_content(application_token: params[:application_token], chat_number: params[:chat_number], content: params[:content])
         json_response_messages_search(@search_result, :created)
     end
 
@@ -71,11 +71,6 @@ class MessagesController < ApplicationController
         end
     end
 
-    # gets the parent chat for the current messages
-    def get_chat
-        @chat = Chat.find([params[:application_token], params[:chat_number]])
-    end
-
     # gets the message specfied in the query params
     def get_chat_message
         @message = Message.find([params[:application_token], params[:chat_number], params[:number]])
@@ -84,22 +79,22 @@ class MessagesController < ApplicationController
     # update the messages count and the message number
     def update_message_count_and_number(destroy: false)
         # lock the message number in redis before incrementing the count
-        @lock_result = $red_lock.lock("application_token:#{@chat.application_token}/chat_number:#{@chat.number}", 2000)
+        @lock_result = $red_lock.lock("application_token:#{params[:application_token]}/chat_number:#{params[:chat_number]}", 2000)
         # if the lock is successful
         if @lock_result != false
-            @message_count_number_arr = ($redis.get("application_token:#{@chat.application_token}/chat_number:#{@chat.number}/messages_count#message_number") || "0#0").split('#')
+            @message_count_number_arr = ($redis.get("application_token:#{params[:application_token]}/chat_number:#{params[:chat_number]}/messages_count#message_number") || "0#0").split('#')
             @messages_count = @message_count_number_arr[0].to_i
             @message_number = @message_count_number_arr[1].to_i
             if destroy
                 # get the messages count from redis and decrement it by 1
                 @messages_count -= 1
             else
-                # get the message count from redis and increment it by 1 if not found will set it to 1
+                # get the message count, number from redis and increment it by 1 if not found will set it to 1
                 @messages_count += 1
                 @message_number += 1
             end
             # update the message count in redis
-            $redis.set("application_token:#{@chat.application_token}/chat_number:#{@chat.number}/messages_count#message_number", "#{@messages_count}##{@message_number}")
+            $redis.set("application_token:#{params[:application_token]}/chat_number:#{params[:chat_number]}/messages_count#message_number", "#{@messages_count}##{@message_number}")
             # unlock the message number
             $red_lock.unlock(@lock_result)
             return @message_number, @lock_result

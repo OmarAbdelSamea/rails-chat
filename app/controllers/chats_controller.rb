@@ -1,9 +1,9 @@
 class ChatsController < ApplicationController
-    before_action :get_application, only: [:index, :create, :destroy]
-    before_action :get_application_chat, only: [:show, :destroy]
+    before_action :get_chat, only: [:show, :destroy]
 
     # GET /applications/:application_token/chats 
     def index
+        @application = Application.find(params[:application_token])
         json_response_chats(@application.chats.order(number: :asc))
     end
 
@@ -14,9 +14,9 @@ class ChatsController < ApplicationController
         # if the lock is successfully acquired
         if @lock_result != false
             # create a model with the new scoped number for response 
-            @chat = @application.chats.new(number: @count)
+            @chat = Chat.new(application_token: params[:application_token], number: @count)
             # invoke sidekiq worker to create a new chat record in the db
-            CreateChatJob.perform_async(@application.token, @count)
+            CreateChatJob.perform_async(params[:application_token], @count)
             json_response_chats(@chat, :created)
         else
             # if lock result is false then resource not available return error
@@ -46,24 +46,19 @@ class ChatsController < ApplicationController
 
     private
 
-    # Gets the application specified in the query params
-    def get_application
-        @application = Application.find(params[:application_token])
-    end
-
     # Gets the chat specfied in the query params
-    def get_application_chat
+    def get_chat
         @chat = Chat.find([params[:application_token], params[:number]])
     end
 
     # gets the next scoped chat number from redis
     def update_chat_count_and_number(destroy: false)
         # lock the chat number in redis before incrementing the chats count and increment the chat number
-        @lock_result = $red_lock.lock("application_token:#{@application.token}", 2000)
+        @lock_result = $red_lock.lock("application_token:#{params[:application_token]}", 2000)
         # if the lock is successful
         if @lock_result != false
-            @redis_value = $redis.get("application_token:#{@application.token}/chats_count#chat_number")
-            @chat_count_number_arr = ($redis.get("application_token:#{@application.token}/chats_count#chat_number") || "0#0").split('#')
+            @redis_value = $redis.get("application_token:#{params[:application_token]}/chats_count#chat_number")
+            @chat_count_number_arr = ($redis.get("application_token:#{params[:application_token]}/chats_count#chat_number") || "0#0").split('#')
             @chats_count = @chat_count_number_arr[0].to_i
             @chat_number = @chat_count_number_arr[1].to_i
             if destroy
@@ -75,7 +70,7 @@ class ChatsController < ApplicationController
                 @chat_number += 1
             end
             # update the chat count in redis
-            $redis.set("application_token:#{@application.token}/chats_count#chat_number", "#{@chats_count}##{@chat_number}")
+            $redis.set("application_token:#{params[:application_token]}/chats_count#chat_number", "#{@chats_count}##{@chat_number}")
             # unlock the chat number
             @unlock = $red_lock.unlock(@lock_result)
             return @chat_number, @lock_result
